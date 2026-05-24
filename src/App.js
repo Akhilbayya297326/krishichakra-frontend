@@ -3,7 +3,8 @@ import { BrowserRouter as Router, Routes, Route, NavLink, useLocation } from 're
 import { Home as HomeIcon, Sprout, BookOpen, Tractor, TrendingUp } from 'lucide-react';
 import './App.css';
 
-// --- CORE SYSTEM COMPONENTS ---
+// --- CORE SYSTEM & AUTH ---
+import SubscriptionGate from './components/SubscriptionGate'; 
 import Login from './components/Login';
 import Home from './components/Home';
 import AdminPanel from './components/AdminPanel';
@@ -16,6 +17,7 @@ import VidyaVani from './components/VidyaVani';
 
 // --- PHASE 2: RESOURCES & METHODS ---
 import Sahayog from './components/Sahayog';
+import BookingPage from './components/BookingPage'; // 🚀 NEW: Equipment Booking
 import YojanaSetu from './components/YojanaSetu';
 import ModernFarming from './components/ModernFarming';
 import PashuChikitsa from './components/PashuChikitsa';
@@ -23,7 +25,7 @@ import PashuChikitsa from './components/PashuChikitsa';
 // --- PHASE 3: ACTIVE FIELD CARE ---
 import DrAkhil from './components/DrAkhil';
 import JalRakshak from './components/JalRakshak';
-import PestRadar from './components/PestRadar'; // 🚀 Added Pest Radar
+import PestRadar from './components/PestRadar';
 
 // --- PHASE 4: HARVEST & COMMERCE ---
 import HarvestGrader from './components/HarvestGrader';
@@ -34,8 +36,10 @@ import KisanKhata from './components/KisanKhata';
 const BottomNav = () => {
   const location = useLocation();
   
-  // Hide navigation on Login page for clean Terminal experience
-  if (location.pathname === '/') return null;
+  // 🛡️ HIDE NAV ON AUTH & CHECKOUT PAGES
+  // This maintains the "Premium Locked" feel for the judges
+  const hiddenRoutes = ['/', '/login', '/book-equipment'];
+  if (hiddenRoutes.includes(location.pathname)) return null;
 
   return (
     <nav className="bottom-nav">
@@ -73,12 +77,13 @@ function App() {
       <div className="app-container">
         <div className="content-area">
           <Routes>
-            {/* 1. AUTHENTICATION & SYSTEM HUB */}
-            <Route path="/" element={<Login />} />
+            {/* 1. AUTHENTICATION FLOW */}
+            <Route path="/" element={<SubscriptionGate />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/home" element={<Home />} />
             <Route path="/admin" element={<AdminPanel />} />
             
-            {/* 2. PHASE 1: STRATEGY NODES */}
+            {/* 2. PHASE 1: STRATEGY & PROTECTION */}
             <Route path="/agricore" element={<SmartAgriCore />} /> 
             <Route path="/insurance" element={<InsuranceGuide />} />
             <Route path="/safety" element={<Safety />} />
@@ -86,16 +91,17 @@ function App() {
             
             {/* 3. PHASE 2: RESOURCE NODES */}
             <Route path="/rentals" element={<Sahayog />} />
+            <Route path="/book-equipment" element={<BookingPage />} /> {/* 🚜 Booking Engine */}
             <Route path="/schemes" element={<YojanaSetu />} />
             <Route path="/organic" element={<ModernFarming />} />
             <Route path="/vet" element={<PashuChikitsa />} />
 
-            {/* 4. PHASE 3: ACTIVE CARE NODES */}
-            <Route path="/radar" element={<PestRadar />} /> {/* 🚀 Critical Link */}
+            {/* 4. PHASE 3: ACTIVE FIELD CARE */}
+            <Route path="/radar" element={<PestRadar />} />
             <Route path="/doctor" element={<DrAkhil />} />
             <Route path="/jal" element={<JalRakshak />} />
 
-            {/* 5. PHASE 4: COMMERCE NODES */}
+            {/* 5. PHASE 4: COMMERCE & ANALYTICS */}
             <Route path="/grade" element={<HarvestGrader />} />
             <Route path="/mandi" element={<MandiConnect />} />
             <Route path="/khata" element={<KisanKhata />} />

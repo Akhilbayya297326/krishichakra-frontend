@@ -1,18 +1,20 @@
-// This script automatically detects if you are running locally
-// or on a network, so you don't have to change IPs manually.
+// src/components/apiConfig.js
 
+/**
+ * 🚀 RYTHU MITRA - CLOUD DEPLOYMENT CONFIGURATION
+ * This automatically routes traffic to the live database when deployed,
+ * but keeps local testing fast and easy on your laptop.
+ */
 const getApiBaseUrl = () => {
   const hostname = window.location.hostname;
-  
-  // If you are using 'npm start' and opening on your phone via Wi-Fi,
-  // this will automatically use your laptop's IP address.
+
+  // 1. If running locally on your laptop (npm start)
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     return 'http://localhost:5000';
   }
-  
-  // If accessed from another device (like a Judge's phone), 
-  // it uses the current IP of the laptop.
-  return `http://${hostname}:5000`;
+
+  // 2. If running on the internet (Vercel Cloud Deployment)
+  return 'https://rythu-mitra-ak36.vercel.app';
 };
 
-export const API_BASE_URL = "https://rythu-mitra-api.onrender.com";
+export const API_BASE_URL = getApiBaseUrl();
