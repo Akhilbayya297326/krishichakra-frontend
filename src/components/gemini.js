@@ -1,9 +1,9 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // ⚠️ YOUR API KEY (Note: In production, move this to a .env file!)
-const API_KEY = "AIzaSyByPxBOZg9gyloX1rGzccvvjim8F3hSfps"; 
+// Pulling securely from Environment Variables
+const API_KEY = process.env.REACT_APP_GEMINI_API_KEY; 
 const genAI = new GoogleGenerativeAI(API_KEY);
-
 /**
  * 🩺 DR. AKHIL: Analyzes crop images
  */
