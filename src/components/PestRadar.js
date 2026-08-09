@@ -16,6 +16,7 @@ const PestRadar = () => {
   const [userLoc, setUserLoc] = useState(null);
   const [showReportModal, setShowReportModal] = useState(false);
   const [newReport, setNewReport] = useState({ crop: '', disease: '' });
+  const [voicePlayed, setVoicePlayed] = useState(false);
   const [connectionError, setConnectionError] = useState(false);
 
   const user = JSON.parse(localStorage.getItem('krishiUser')) || { lang: 'English' };
@@ -31,8 +32,7 @@ const PestRadar = () => {
       phCrop: "Crop Name (e.g. Cotton)", phDisease: "Disease/Pest (e.g. Armyworm)",
       submit: "Broadcast Alert", cancel: "Cancel",
       locError: "Location access denied. Displaying standard grid data.",
-      distText: "km away", dbEmpty: "No threat reports found in the network.",
-      listenBtn: "Tap to Hear Voice Alert"
+      distText: "km away", dbEmpty: "No threat reports found in the network."
     },
     Hindi: {
       title: "कीट रडार", sub: "लाइव कम्युनिटी अलर्ट",
@@ -43,8 +43,7 @@ const PestRadar = () => {
       phCrop: "फसल का नाम (जैसे: कपास)", phDisease: "बीमारी/कीट (जैसे: सुंडी)",
       submit: "अलर्ट भेजें", cancel: "रद्द करें",
       locError: "स्थान पहुंच अस्वीकृत। मानक ग्रिड डेटा प्रदर्शित कर रहा है।",
-      distText: "किमी दूर", dbEmpty: "नेटवर्क में कोई खतरे की रिपोर्ट नहीं मिली।",
-      listenBtn: "वॉयस अलर्ट सुनने के लिए टैप करें"
+      distText: "किमी दूर", dbEmpty: "नेटवर्क में कोई खतरे की रिपोर्ट नहीं मिली।"
     },
     Telugu: {
       title: "పెస్ట్ రాడార్", sub: "లైవ్ కమ్యూనిటీ మ్యాప్",
@@ -55,8 +54,7 @@ const PestRadar = () => {
       phCrop: "పంట పేరు (ఉదా: పత్తి)", phDisease: "తెగులు/పురుగు (ఉదా: కత్తెర పురుగు)",
       submit: "అలర్ట్ పంపండి", cancel: "రద్దు చేయండి",
       locError: "స్థాన ప్రాప్యత నిరాకరించబడింది. ప్రామాణిక గ్రిడ్ డేటాను చూపుతోంది.",
-      distText: "కి.మీ దూరం", dbEmpty: "నెట్‌వర్క్‌లో ముప్పు నివేదికలు కనుగొనబడలేదు.",
-      listenBtn: "వాయిస్ అలర్ట్ వినడానికి నొక్కండి"
+      distText: "కి.మీ దూరం", dbEmpty: "నెట్‌వర్క్‌లో ముప్పు నివేదికలు కనుగొనబడలేదు."
     }
   };
 
@@ -71,7 +69,7 @@ const PestRadar = () => {
 
   // --- 🧮 HAVERSINE DISTANCE CALCULATOR ---
   const calculateDistance = useCallback((lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Earth's radius in km
+    const R = 6371; 
     const dLat = (lat2 - lat1) * (Math.PI / 180);
     const dLon = (lon2 - lon1) * (Math.PI / 180);
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -81,35 +79,32 @@ const PestRadar = () => {
     return (R * c).toFixed(1);
   }, []);
 
-  // --- 🗣️ BULLETPROOF AI VOICE ALERT (Bypasses Browser Blocks) ---
-  const triggerVoiceAlert = (threat) => {
-    if (!window.speechSynthesis) {
-      alert("Voice alerts are not supported in this browser.");
-      return;
-    }
+  // --- 🗣️ DRAMATIC AI VOICE ALERT ---
+  const triggerVoiceAlert = useCallback((threat) => {
+    if (!window.speechSynthesis) return;
     
-    // Cancel any currently playing speech to prevent overlap
-    window.speechSynthesis.cancel();
+    window.speechSynthesis.cancel(); // Clear any stuck audio
 
     const message = t.warning.replace('{disease}', threat.disease).replace('{dist}', threat.distance);
     const utterance = new SpeechSynthesisUtterance(message);
     
-    // Set regional language based on user profile
     if (user.lang === 'Telugu') utterance.lang = 'te-IN';
     else if (user.lang === 'Hindi') utterance.lang = 'hi-IN';
     else utterance.lang = 'en-IN';
     
-    // Optimize voice clarity
-    utterance.rate = 0.9; 
-    utterance.pitch = 1.0;
+    utterance.rate = 0.9;
+    
+    // Slight delay so the UI renders first, creating a "wow" moment
+    setTimeout(() => {
+      window.speechSynthesis.speak(utterance);
+      setVoicePlayed(true);
+    }, 600);
 
-    window.speechSynthesis.speak(utterance);
-  };
+  }, [t.warning, user.lang]);
 
   const fetchOutbreaks = useCallback(async (userLat, userLon) => {
     try {
       setConnectionError(false);
-      // 3 SECOND TIMEOUT ensures app doesn't freeze on mobile
       const res = await axios.get(`${API_BASE_URL}/api/outbreaks`, { timeout: 3000 });
       let dataToProcess = res.data;
 
@@ -121,27 +116,35 @@ const PestRadar = () => {
 
         processedData.sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
         setOutbreaks(processedData);
+
+        // AUTOMATIC TRIGGER
+        if (processedData[0].distance < 10 && !voicePlayed) {
+          triggerVoiceAlert(processedData[0]);
+        }
       } else {
-        setOutbreaks([]); // Empty DB
+        setOutbreaks([]); 
       }
 
     } catch (err) {
       console.warn("Backend Blocked! Loading Safe-Mode Offline Data.");
       setConnectionError(true);
       
-      // Process Fallback Data
       const processedFallback = fallbackOutbreaks.map(report => ({
         ...report,
         distance: calculateDistance(userLat, userLon, report.lat, report.lon)
       }));
       processedFallback.sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
       setOutbreaks(processedFallback);
+      
+      // AUTOMATIC TRIGGER (OFFLINE MODE)
+      if (processedFallback[0].distance < 10 && !voicePlayed) {
+        triggerVoiceAlert(processedFallback[0]);
+      }
     } finally {
       setLoading(false);
     }
-  }, [calculateDistance]);
+  }, [calculateDistance, voicePlayed, triggerVoiceAlert]);
 
-  // 1. DUAL-ENGINE GEOLOCATION (Solves HTTP Mobile Block)
   useEffect(() => {
     const handleDetectLocation = async () => {
       const fetchFromIP = async () => {
@@ -152,7 +155,6 @@ const PestRadar = () => {
           setUserLoc({ lat, lon });
           fetchOutbreaks(lat, lon);
         } catch (e) {
-          // Absolute worst case scenario fallback coordinates
           setUserLoc({ lat: 17.6868, lon: 83.2185 });
           fetchOutbreaks(17.6868, 83.2185);
         }
@@ -171,7 +173,7 @@ const PestRadar = () => {
           fetchOutbreaks(lat, lon);
         },
         (error) => {
-          fetchFromIP(); // Fallback if Browser blocks HTTP location
+          fetchFromIP(); 
         },
         { timeout: 5000 }
       );
@@ -180,7 +182,6 @@ const PestRadar = () => {
     handleDetectLocation();
   }, [fetchOutbreaks]);
 
-  // 🚀 DB SEEDER: Instantly populates your empty MongoDB
   const seedDatabase = async () => {
     setLoading(true);
     try {
@@ -224,7 +225,7 @@ const PestRadar = () => {
   return (
     <div style={{paddingBottom:'90px', background:'#020617', minHeight:'100vh', color:'#f8fafc', fontFamily: '"Inter", sans-serif'}}>
       
-      {/* 1. HEADER */}
+      {/* HEADER */}
       <div style={{ background: 'rgba(15, 23, 42, 0.8)', backdropFilter: 'blur(16px)', padding: '35px 20px 25px 20px', borderBottom: '1px solid rgba(220, 38, 38, 0.3)', position: 'sticky', top: 0, zIndex: 50, boxShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>
         <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
           <button onClick={() => navigate('/home')} style={{background:'rgba(220, 38, 38, 0.1)', border:'1px solid rgba(220, 38, 38, 0.3)', color:'#ef4444', padding:'10px', borderRadius:'12px', cursor:'pointer'}}><ArrowLeft size={24}/></button>
@@ -235,7 +236,7 @@ const PestRadar = () => {
         </div>
       </div>
 
-      {/* 2. RADAR ANIMATION UI */}
+      {/* RADAR ANIMATION UI */}
       <div style={{position:'relative', height:'250px', display:'flex', justifyContent:'center', alignItems:'center', overflow:'hidden', borderBottom:'1px solid #1e293b', background:'radial-gradient(circle, #450a0a 0%, #020617 70%)'}}>
         {loading ? (
           <div style={{textAlign:'center', color:'#ef4444'}}><Loader className="spin" size={40} style={{margin:'0 auto 10px auto'}}/><p style={{fontWeight:'bold', letterSpacing:'1px'}}>{t.detecting}</p></div>
@@ -264,14 +265,13 @@ const PestRadar = () => {
 
       <div style={{padding: '20px'}}>
         
-        {/* 3. REPORT BUTTON */}
+        {/* REPORT BUTTON */}
         <button onClick={() => setShowReportModal(true)} style={{ width:'100%', padding:'18px', background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)', color:'white', border:'none', borderRadius:'16px', fontSize:'1.1rem', fontWeight:'900', letterSpacing:'1px', display:'flex', justifyContent:'center', alignItems:'center', gap:'10px', cursor:'pointer', marginBottom:'25px', boxShadow:'0 8px 25px rgba(220, 38, 38, 0.4)' }}>
           <AlertTriangle size={20}/> {t.btnReport}
         </button>
 
         <h3 style={{color:'#94a3b8', fontSize:'0.85rem', letterSpacing:'2px', margin:'0 0 15px 0', textTransform:'uppercase'}}>Live Local Threats</h3>
 
-        {/* 4. REAL OUTBREAK DATA LIST */}
         {!loading && outbreaks.length === 0 && !connectionError && (
           <div style={{textAlign:'center', marginTop:'30px', color:'#64748b', padding: '30px 20px', background: '#0f172a', borderRadius: '20px', border:'1px solid #1e293b'}}>
             <CheckCircle size={50} color="#10b981" style={{margin: '0 auto 15px auto', opacity:0.8}} />
@@ -308,22 +308,12 @@ const PestRadar = () => {
                 </div>
               </div>
 
-              {/* INTERACTIVE VOICE BUTTON - Guarantees Browser Playback */}
+              {/* AUTOMATIC VISUAL ALERT UI */}
               {isCritical && (
-                <button 
-                  onClick={() => triggerVoiceAlert(threat)}
-                  style={{
-                    marginTop:'20px', width: '100%', background:'rgba(220, 38, 38, 0.15)', 
-                    padding:'15px', borderRadius:'12px', display:'flex', alignItems:'center', 
-                    justifyContent:'center', gap:'10px', border:'1px solid rgba(220, 38, 38, 0.4)', 
-                    cursor:'pointer', transition: 'all 0.2s ease'
-                  }}
-                >
-                  <Volume2 size={24} color="#fca5a5" className="pulse-icon"/>
-                  <span style={{color:'#fca5a5', fontSize:'0.95rem', fontWeight:'900', letterSpacing:'1px', textTransform:'uppercase'}}>
-                    {t.listenBtn}
-                  </span>
-                </button>
+                <div style={{marginTop:'20px', background:'rgba(220, 38, 38, 0.15)', padding:'12px', borderRadius:'12px', display:'flex', alignItems:'center', gap:'10px', border:'1px solid rgba(220, 38, 38, 0.3)'}}>
+                  <Volume2 size={20} color="#fca5a5" className="pulse-icon"/>
+                  <span style={{color:'#fca5a5', fontSize:'0.85rem', fontWeight:'bold', letterSpacing:'1px', textTransform:'uppercase'}}>Voice Alert Broadcasted</span>
+                </div>
               )}
             </div>
           );
@@ -331,7 +321,7 @@ const PestRadar = () => {
 
       </div>
 
-      {/* 5. MODAL TO REPORT OUTBREAK */}
+      {/* REPORT MODAL */}
       {showReportModal && (
         <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(2, 6, 23, 0.85)', backdropFilter: 'blur(8px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000, padding:'20px' }}>
           <div className="fade-in" style={{ background:'#0f172a', padding:'30px', borderRadius:'24px', width:'100%', maxWidth:'400px', border:'1px solid #1e293b', boxShadow:'0 20px 40px rgba(0,0,0,0.6)' }}>
