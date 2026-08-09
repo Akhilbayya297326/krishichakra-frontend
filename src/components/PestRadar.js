@@ -16,7 +16,6 @@ const PestRadar = () => {
   const [userLoc, setUserLoc] = useState(null);
   const [showReportModal, setShowReportModal] = useState(false);
   const [newReport, setNewReport] = useState({ crop: '', disease: '' });
-  const [voicePlayed, setVoicePlayed] = useState(false);
   const [connectionError, setConnectionError] = useState(false);
 
   const user = JSON.parse(localStorage.getItem('krishiUser')) || { lang: 'English' };
@@ -32,7 +31,8 @@ const PestRadar = () => {
       phCrop: "Crop Name (e.g. Cotton)", phDisease: "Disease/Pest (e.g. Armyworm)",
       submit: "Broadcast Alert", cancel: "Cancel",
       locError: "Location access denied. Displaying standard grid data.",
-      distText: "km away", dbEmpty: "No threat reports found in the network."
+      distText: "km away", dbEmpty: "No threat reports found in the network.",
+      listenBtn: "Tap to Hear Voice Alert"
     },
     Hindi: {
       title: "कीट रडार", sub: "लाइव कम्युनिटी अलर्ट",
@@ -43,7 +43,8 @@ const PestRadar = () => {
       phCrop: "फसल का नाम (जैसे: कपास)", phDisease: "बीमारी/कीट (जैसे: सुंडी)",
       submit: "अलर्ट भेजें", cancel: "रद्द करें",
       locError: "स्थान पहुंच अस्वीकृत। मानक ग्रिड डेटा प्रदर्शित कर रहा है।",
-      distText: "किमी दूर", dbEmpty: "नेटवर्क में कोई खतरे की रिपोर्ट नहीं मिली।"
+      distText: "किमी दूर", dbEmpty: "नेटवर्क में कोई खतरे की रिपोर्ट नहीं मिली।",
+      listenBtn: "वॉयस अलर्ट सुनने के लिए टैप करें"
     },
     Telugu: {
       title: "పెస్ట్ రాడార్", sub: "లైవ్ కమ్యూనిటీ మ్యాప్",
@@ -54,7 +55,8 @@ const PestRadar = () => {
       phCrop: "పంట పేరు (ఉదా: పత్తి)", phDisease: "తెగులు/పురుగు (ఉదా: కత్తెర పురుగు)",
       submit: "అలర్ట్ పంపండి", cancel: "రద్దు చేయండి",
       locError: "స్థాన ప్రాప్యత నిరాకరించబడింది. ప్రామాణిక గ్రిడ్ డేటాను చూపుతోంది.",
-      distText: "కి.మీ దూరం", dbEmpty: "నెట్‌వర్క్‌లో ముప్పు నివేదికలు కనుగొనబడలేదు."
+      distText: "కి.మీ దూరం", dbEmpty: "నెట్‌వర్క్‌లో ముప్పు నివేదికలు కనుగొనబడలేదు.",
+      listenBtn: "వాయిస్ అలర్ట్ వినడానికి నొక్కండి"
     }
   };
 
@@ -79,18 +81,30 @@ const PestRadar = () => {
     return (R * c).toFixed(1);
   }, []);
 
-  // --- 🗣️ AI VOICE ALERT ---
-  const triggerVoiceAlert = useCallback((threat) => {
-    if (!window.speechSynthesis) return;
+  // --- 🗣️ BULLETPROOF AI VOICE ALERT (Bypasses Browser Blocks) ---
+  const triggerVoiceAlert = (threat) => {
+    if (!window.speechSynthesis) {
+      alert("Voice alerts are not supported in this browser.");
+      return;
+    }
+    
+    // Cancel any currently playing speech to prevent overlap
+    window.speechSynthesis.cancel();
+
     const message = t.warning.replace('{disease}', threat.disease).replace('{dist}', threat.distance);
     const utterance = new SpeechSynthesisUtterance(message);
+    
+    // Set regional language based on user profile
     if (user.lang === 'Telugu') utterance.lang = 'te-IN';
     else if (user.lang === 'Hindi') utterance.lang = 'hi-IN';
     else utterance.lang = 'en-IN';
     
+    // Optimize voice clarity
+    utterance.rate = 0.9; 
+    utterance.pitch = 1.0;
+
     window.speechSynthesis.speak(utterance);
-    setVoicePlayed(true);
-  }, [t.warning, user.lang]);
+  };
 
   const fetchOutbreaks = useCallback(async (userLat, userLon) => {
     try {
@@ -99,7 +113,6 @@ const PestRadar = () => {
       const res = await axios.get(`${API_BASE_URL}/api/outbreaks`, { timeout: 3000 });
       let dataToProcess = res.data;
 
-      // If DB is totally empty, we don't process fallback here, we let the UI handle it
       if (dataToProcess.length > 0) {
         const processedData = dataToProcess.map(report => ({
           ...report,
@@ -108,10 +121,6 @@ const PestRadar = () => {
 
         processedData.sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
         setOutbreaks(processedData);
-
-        if (processedData[0].distance < 10 && !voicePlayed) {
-          triggerVoiceAlert(processedData[0]);
-        }
       } else {
         setOutbreaks([]); // Empty DB
       }
@@ -127,14 +136,10 @@ const PestRadar = () => {
       }));
       processedFallback.sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
       setOutbreaks(processedFallback);
-      
-      if (processedFallback[0].distance < 10 && !voicePlayed) {
-        triggerVoiceAlert(processedFallback[0]);
-      }
     } finally {
       setLoading(false);
     }
-  }, [calculateDistance, voicePlayed, triggerVoiceAlert]);
+  }, [calculateDistance]);
 
   // 1. DUAL-ENGINE GEOLOCATION (Solves HTTP Mobile Block)
   useEffect(() => {
@@ -147,7 +152,7 @@ const PestRadar = () => {
           setUserLoc({ lat, lon });
           fetchOutbreaks(lat, lon);
         } catch (e) {
-          // Absolute worst case scenario fallback coordinates (Vizag)
+          // Absolute worst case scenario fallback coordinates
           setUserLoc({ lat: 17.6868, lon: 83.2185 });
           fetchOutbreaks(17.6868, 83.2185);
         }
@@ -193,11 +198,9 @@ const PestRadar = () => {
     }
   };
 
-  // --- 📝 REPORT NEW OUTBREAK TO DATABASE ---
   const handleReportSubmit = async () => {
     if (!newReport.crop || !newReport.disease) return alert("Please fill all details");
     
-    // Slight randomization so multiple reports don't stack on exact same coordinate
     const randomOffset = () => (Math.random() - 0.5) * 0.02;
 
     const payload = {
@@ -238,18 +241,15 @@ const PestRadar = () => {
           <div style={{textAlign:'center', color:'#ef4444'}}><Loader className="spin" size={40} style={{margin:'0 auto 10px auto'}}/><p style={{fontWeight:'bold', letterSpacing:'1px'}}>{t.detecting}</p></div>
         ) : (
           <>
-            {/* Grid Rings */}
             <div style={{width:'200px', height:'200px', borderRadius:'50%', border:'1px solid rgba(239, 68, 68, 0.2)', position:'absolute'}}></div>
             <div style={{width:'120px', height:'120px', borderRadius:'50%', border:'1px solid rgba(239, 68, 68, 0.4)', position:'absolute'}}></div>
             <div style={{width:'40px', height:'40px', borderRadius:'50%', background:'#ef4444', position:'absolute', boxShadow:'0 0 20px #ef4444'}} className="pulse-icon"></div>
             
-            {/* Radar Sweep */}
             <div className="radar-sweep" style={{position:'absolute', width:'100px', height:'100px', borderRight:'2px solid #ef4444', background:'linear-gradient(45deg, transparent 50%, rgba(239, 68, 68, 0.4) 100%)', borderRadius:'0 100px 0 0', transformOrigin:'bottom left', top:'25px', left:'50%'}}></div>
             
-            {/* Draw Real Pins on Radar based on distance */}
             {outbreaks.slice(0, 4).map((threat, i) => {
               const distanceNum = parseFloat(threat.distance);
-              if (distanceNum > 25) return null; // Don't show on local radar if > 25km
+              if (distanceNum > 25) return null; 
               const topPos = i === 0 ? '30%' : (i === 1 ? '70%' : (i === 2 ? '40%' : '60%'));
               const leftPos = i === 0 ? '70%' : (i === 1 ? '30%' : (i === 2 ? '20%' : '80%'));
               return (
@@ -277,7 +277,6 @@ const PestRadar = () => {
             <CheckCircle size={50} color="#10b981" style={{margin: '0 auto 15px auto', opacity:0.8}} />
             <p style={{margin: '0 0 20px 0', fontWeight:'bold', fontSize:'1.1rem'}}>{t.safe}</p>
             
-            {/* 🔴 HACKATHON DATABASE SEEDER BUTTON 🔴 */}
             <button onClick={seedDatabase} style={{
               background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)', color: 'white', border: 'none', padding: '15px 25px', borderRadius: '12px', fontSize: '1rem', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', margin: '0 auto', boxShadow: '0 8px 20px rgba(220, 38, 38, 0.4)'
             }}>
@@ -309,11 +308,22 @@ const PestRadar = () => {
                 </div>
               </div>
 
+              {/* INTERACTIVE VOICE BUTTON - Guarantees Browser Playback */}
               {isCritical && (
-                <div style={{marginTop:'20px', background:'rgba(220, 38, 38, 0.15)', padding:'12px', borderRadius:'12px', display:'flex', alignItems:'center', gap:'10px', border:'1px solid rgba(220, 38, 38, 0.3)'}}>
-                  <Volume2 size={20} color="#fca5a5" className="pulse-icon"/>
-                  <span style={{color:'#fca5a5', fontSize:'0.85rem', fontWeight:'bold', letterSpacing:'1px', textTransform:'uppercase'}}>Voice Alert Broadcasted</span>
-                </div>
+                <button 
+                  onClick={() => triggerVoiceAlert(threat)}
+                  style={{
+                    marginTop:'20px', width: '100%', background:'rgba(220, 38, 38, 0.15)', 
+                    padding:'15px', borderRadius:'12px', display:'flex', alignItems:'center', 
+                    justifyContent:'center', gap:'10px', border:'1px solid rgba(220, 38, 38, 0.4)', 
+                    cursor:'pointer', transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Volume2 size={24} color="#fca5a5" className="pulse-icon"/>
+                  <span style={{color:'#fca5a5', fontSize:'0.95rem', fontWeight:'900', letterSpacing:'1px', textTransform:'uppercase'}}>
+                    {t.listenBtn}
+                  </span>
+                </button>
               )}
             </div>
           );

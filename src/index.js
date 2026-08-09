@@ -14,8 +14,8 @@ root.render(
 );
 
 // 🚀 CRITICAL CHANGE: 
-// We changed this to .register() to make the app work Offline.
-serviceWorkerRegistration.register();
+// Changed to .unregister() to clear the MIME type error for Vercel deployment.
+serviceWorkerRegistration.unregister();
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
