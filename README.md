@@ -1,70 +1,117 @@
-# Getting Started with Create React App
+Here is the completely updated and highly professional `README.md` file for your repository. It replaces the generic Create React App boilerplate with a comprehensive overview of your entire ecosystem, features, and tech stack.
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+You can copy and paste this directly into your GitHub repository.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+# 🌱 Krishi Chakra
 
-### `npm start`
+**An AI-Powered Digital Agricultural Ecosystem**
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Indian smallholder farmers face a dual crisis of delayed agricultural intelligence and market exploitation, worsened by poor digital literacy, language barriers, and unstable rural internet.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+**Krishi Chakra** solves this by putting an autonomous digital agronomist and quality inspector directly into the farmer's pocket. Built with an offline-first architecture and powered by multimodal Generative AI, this platform democratizes access to expert-level agronomic data, fair market pricing, and government welfare schemes.
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 🚀 Key Innovations & Features
 
-### `npm run build`
+* **Dr. Akhil (Computer Vision Diagnostic Engine):** Processes farmer-uploaded images of infected crops using Google Gemini 2.5 Flash to instantly generate localized disease identification and a 3-step actionable treatment plan (organic and chemical).
+* **Smart AgriCore 2.0:** A unified geospatial engine that cross-references physical soil health cards or manual NPK inputs with weather telemetry to forecast soil remediation and optimized crop recommendations.
+* **Harvest Quality Grader:** Democratizes pricing by visually inspecting harvest images to generate an objective, Agmark-compliant grade and a strategic negotiation script in the farmer's native language.
+* **Community Pest Radar:** A live proximity-based alert system that broadcasts audio warnings if critical crop threats are reported within a 10km radius.
+* **Yojana Setu:** Evaluates user profile variables (land size, state, socio-economic category) to match farmers with specific Central and State welfare programs.
+* **Native Vernacular Voice UI:** Eradicates the typing barrier by utilizing native browser Speech Recognition APIs mapped to regional dialects (Telugu, Hindi, English) for hands-free navigation.
+* **Offline-First Resiliency:** Automatically queues user inputs and API requests during network drops in rural fields, syncing seamlessly to the cloud once network stability is restored.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 🛠️ Technology Stack
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+**Frontend**
 
-### `npm run eject`
+* React.js (Single Page Application)
+* HTML5 / CSS3 (Responsive Mobile-First UI)
+* Axios (Network and Offline Queue Interceptors)
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+**Backend & Database**
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+* Node.js & Express.js (RESTful API architecture)
+* MongoDB Atlas (NoSQL Cloud Database)
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+**Artificial Intelligence & Integrations**
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+* Google Generative AI (`@google/generative-ai`)
+* Gemini 2.5 Flash API (Vision & Text generation)
+* Web Speech API (Native voice synthesis and recognition)
 
-## Learn More
+**Deployment**
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+* Vercel (Serverless edge deployment and CI/CD integration)
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+---
 
-### Code Splitting
+## ⚙️ Local Development Setup
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+To get a local copy up and running, follow these simple steps.
 
-### Analyzing the Bundle Size
+### Prerequisites
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+* Node.js (v16.x or higher)
+* npm or yarn
+* MongoDB Atlas Account
+* Google Gemini API Key
 
-### Making a Progressive Web App
+### Installation
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+1. **Clone the repository**
+```bash
+git clone https://github.com/Akhilbayya297326/krishichakra-frontend.git
+cd krishichakra-frontend
 
-### Advanced Configuration
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
 
-### Deployment
+2. **Install dependencies**
+```bash
+npm install
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```
 
-### `npm run build` fails to minify
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+3. **Configure Environment Variables**
+Create a `.env` file in the root directory and add the following keys:
+```env
+REACT_APP_GEMINI_API_KEY=your_google_gemini_api_key_here
+REACT_APP_BACKEND_URL=http://localhost:5000 
+
+```
+
+
+4. **Start the development server**
+```bash
+npm start
+
+```
+
+
+The application will be running on `http://localhost:3000`.
+
+---
+
+## 📦 Standard React Scripts
+
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app). In the project directory, you can also run:
+
+* `npm test`: Launches the test runner in interactive watch mode.
+* `npm run build`: Builds the app for production to the `build` folder. It correctly bundles React in production mode and optimizes the build for the best performance.
+* `npm run eject`: Removes the single build dependency from your project. *(Note: this is a one-way operation. Once you eject, you can't go back!)*
+
+---
+
+## 👨‍💻 Developed By
+
+**B. Akhil**
+
+* Computer Science & Engineering
+* Focus Area: AgriTech, AI Integration, & Full-Stack MERN Development
