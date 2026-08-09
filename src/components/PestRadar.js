@@ -79,24 +79,28 @@ const PestRadar = () => {
     return (R * c).toFixed(1);
   }, []);
 
-  // --- 🗣️ DRAMATIC AI VOICE ALERT ---
+  // --- 🗣️ DRAMATIC AI VOICE ALERT (3 TIMES) ---
   const triggerVoiceAlert = useCallback((threat) => {
     if (!window.speechSynthesis) return;
     
     window.speechSynthesis.cancel(); // Clear any stuck audio
 
     const message = t.warning.replace('{disease}', threat.disease).replace('{dist}', threat.distance);
-    const utterance = new SpeechSynthesisUtterance(message);
-    
-    if (user.lang === 'Telugu') utterance.lang = 'te-IN';
-    else if (user.lang === 'Hindi') utterance.lang = 'hi-IN';
-    else utterance.lang = 'en-IN';
-    
-    utterance.rate = 0.9;
     
     // Slight delay so the UI renders first, creating a "wow" moment
     setTimeout(() => {
-      window.speechSynthesis.speak(utterance);
+      // Loop 3 times to queue the speech back-to-back
+      for (let i = 0; i < 3; i++) {
+        const utterance = new SpeechSynthesisUtterance(message);
+        
+        if (user.lang === 'Telugu') utterance.lang = 'te-IN';
+        else if (user.lang === 'Hindi') utterance.lang = 'hi-IN';
+        else utterance.lang = 'en-IN';
+        
+        utterance.rate = 0.9;
+        
+        window.speechSynthesis.speak(utterance);
+      }
       setVoicePlayed(true);
     }, 600);
 
